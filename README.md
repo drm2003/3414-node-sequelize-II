@@ -199,3 +199,10 @@
     as: 'todasAsMatriculadas'
     });
 ```
+
+### Links da aula
+
+- Seguem os links para conteúdos apresentados em vídeo ou citados durante esta aula:
+
+  - Método findOne; (https://sequelize.org/docs/v6/core-concepts/model-querying-finders/#findone)
+  - Estrutura do objeto options contendo o where no método update. (https://sequelize.org/docs/v6/core-concepts/model-querying-basics/#simple-update-queries)

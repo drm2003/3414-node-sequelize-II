@@ -5,6 +5,5 @@ module.exports = (objetoParams) => {
     }
   }
 
-
   return objetoParams;
 };
