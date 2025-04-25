@@ -206,3 +206,103 @@
 
   - Método findOne; (https://sequelize.org/docs/v6/core-concepts/model-querying-finders/#findone)
   - Estrutura do objeto options contendo o where no método update. (https://sequelize.org/docs/v6/core-concepts/model-querying-basics/#simple-update-queries)
+
+# AULA 04
+
+## OPERADORES
+
+- Quando se necessita de passar parâmetros de forma variável
+- Para passarmos as informações para a requisição, podemos utilizar o que chamamos de Query Params ou Query Strings, que são um pouco diferentes dos parâmetros de rota que estamos utilizando.
+  - Exemplo: ?data_inicial=2023-01-01&data_final=2023-09-01
+
+## QUERY PARAMS
+
+- Permitem passar parâmetros que não são mapeadas nas rotas
+- Então, essa sintaxe utiliza esses operadores que marcam o início com ? e separam parâmetros com o & e o =, para termos chave e valor.
+- Essa é a sintaxe dessas Query Strings, que passamos via rota, e a requisição capta esses valores - a rota em si não considera essas Query Strings, ela desconsidera - mas conseguimos usar dentro da requisição.
+
+## eager loading e lazy loading
+
+### lazy loading
+
+- No Sequelize, a estratégia de lazy loading é implementada através dos métodos automáticos criados com as associações entre modelos. Por exemplo:
+
+```
+  const estudante = await Pessoa.findOne({
+    where: {
+      nome: "Roberta Estudante"
+    }
+  });
+  console.log('nome:', estudante.nome);
+  console.log('ativo:', estudante.ativo);
+
+  const matriculas = await estudante.getMatriculas();
+  console.log('matrículas de estudante:', matriculas);
+```
+
+### Eager loading
+
+- Para implementar a estratégia de eager loading usando Sequelize, é possível utilizar uma as propriedades do objeto options, include:
+
+```
+  const estudante = await Pessoa.findOne({
+    where: {
+      name: "Roberta Estudante"
+    },
+    include: Matricula
+  });
+
+  console.log('nome:', estudante.nome);
+  console.log('matriculas:', estudante.matricula);
+```
+
+## AGRUPAMENTO
+
+- E agrupar registros a partir de uma contagem
+
+### AGRUPAMENTO COM LITERAIS
+
+- Utiliza-se o método literal do Sequelize para realizar os agrupamentos
+- ATTRIBUTES:
+  - Define quais colunas você quer selecionar na consulta (SELECT).
+    - attributes: ['curso_id']
+- GROUP:
+  - group define o agrupamento dos resultados no SQL, ou seja, ele diz por qual campo os registros serão agrupados para aplicar funções de agregação (COUNT, SUM, AVG, etc.).
+- HAVING:
+  - É uma cláusula SQL usada depois de um GROUP BY para filtrar grupos agregados.
+  - É diferente de WHERE:
+    - WHERE → filtra antes da agregação
+    - HAVING → filtra depois da agregação
+  - Exemplo: group: ['curso_id']
+
+```
+  async pegaCursosLotados (req, res) {
+    const lotacaoCurso = 2;
+    try {
+      const cursosLotados = await matriculaServices.pegaEContaRegistros(
+        {
+          where: {
+            status: 'matriculado'
+          },
+          attributes: ['curso_id'],
+          group: ['curso_id'],
+          having: Sequelize.literal(`count(curso_id) >= ${lotacaoCurso}`)
+        });
+      return res.status(200).json(cursosLotados);
+    } catch (erro) {
+      return res.status(500).json({ erro: erro.message });
+    }
+  }
+```
+
+## LINKS DA AULA
+
+- Documentação do Sequelize:
+  - Lista dos operadores; (https://sequelize.org/docs/v6/core-concepts/model-querying-basics/#operators)
+  - Método findAndCountAll; (https://sequelize.org/api/v6/class/src/model.js~model#static-method-findAndCountAll)
+  - Referência da API do Sequelize com todas as propriedades do objeto options; (https://sequelize.org/api/v6/class/src/model.js~model#static-method-findAll)
+  - Exemplos da documentação sobre agrupamento; (https://sequelize.org/docs/v6/core-concepts/model-querying-basics/#grouping)
+  - Método built in do Sequelize para contagem count. (https://sequelize.org/docs/v6/core-concepts/model-querying-basics/#count)
+- Documentações do SQL
+  - Lista de operadores genéricos do SQL; (https://www.w3schools.com/sql/sql_operators.asp)
+  - Documentação sobre operadores do SQLite. (https://www.sqlite.org/lang_expr.html)
