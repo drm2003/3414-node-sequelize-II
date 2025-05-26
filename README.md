@@ -295,6 +295,80 @@
   }
 ```
 
+
+## TRANSAÇÕES
+
+- Uma transação é uma alteração monitorada que fazemos num banco e que também envolve os métodos e o que o sistema faz quando parte dessas operações dão errado. Ele gerencia os casos de erro, como, por exemplo, em uma operação com 50 linhas de uma tabela onde houver um problema na 49ª. Todo esse gerenciamento é chamado de transação.
+- 
+- Se consultarmos a documentação do Sequelize, veremos que ele possui dois tipos de transação:
+
+  - Transações não gerenciadas (Unmanaged transactions), onde temos que inserir manualmente as ações a serem feitas caso dê certo ou errado
+  - Transações gerenciadas (Managed transactions), onde delegamos para o Sequelize o que fazer se caso houver êxito ou falha.
+
+
+### TRANSAÇÕES NÃO GERENCIADAS
+
+- Commit e Rolback são gerenciados pelo próprio usuário
+```
+  const transacao = await sequelize.transaction();
+
+  try {
+    const personagem = await Personagem.create({
+      nome: 'Bart',
+      sobrenome: 'Simpson'
+    }, { transaction: transacao });
+    await personagem.addParente({
+      nome: 'Lisa',
+      sobrenome: 'Simpson'
+    }, { transaction: transacao });
+    await transacao.commit();
+  } catch (error) {
+    await transacao.rollback();
+  }
+```
+
+### Transações Gerenciadas pelo sequelize
+
+- O próprio sequelize se encarrega de executar
+```
+    const dataSource = require('../database/models');
+
+    class PessoaServices extends Services {
+
+    // Código omitido
+
+        async cancelaPessoaEMatriculas (estudanteId) {
+            return dataSource.sequelize.transaction(async (transacao) => {
+                await super.atualizaRegistro({ ativo: false }, { id: estudanteId }, transacao);
+                await this.matriculaServices.atualizaRegistro({ status: 'cancelado' }, { estudante_id: estudanteId }, transacao);
+            };
+        }
+    }
+
+
+    class Services {
+
+    // Código omitido
+
+    async atualizaRegistro(dadosAtualizados, where, transacao = {}) {
+        const listadeRegistrosAtualizados = await dataSource[this.model]
+            .update(dadosAtualizados, { 
+              where: { ...where }
+              transaction: transacao
+            });
+        if (listadeRegistrosAtualizados[0] === 0) {
+          return false;
+        }
+        return true;
+      }
+        
+        // Código omitido
+    }
+
+
+```
+
+
 ## LINKS DA AULA
 
 - Documentação do Sequelize:
@@ -306,3 +380,9 @@
 - Documentações do SQL
   - Lista de operadores genéricos do SQL; (https://www.w3schools.com/sql/sql_operators.asp)
   - Documentação sobre operadores do SQLite. (https://www.sqlite.org/lang_expr.html)
+  - Documentação do update do sequelize: https://sequelize.org/api/v6/class/src/model.js~model#static-method-update
+  - Documentação para transação do sequelize: https://sequelize.org/docs/v6/other-topics/transactions/
+
+
+
+
